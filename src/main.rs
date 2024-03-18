@@ -1,23 +1,28 @@
-use mlua::prelude::*;
+use minifb::{Key, Window, WindowOptions};
 
-fn main() -> LuaResult<()> {
-    let lua = Lua::new();
+const WIDTH: usize = 640;
+const HEIGHT: usize = 360;
 
-    let table = lua.create_table()?;
-    table.set(1, "one")?;
-    table.set(2, "two")?;
-    table.set(3, "three")?;
+fn main() {
+    let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 
-    lua.globals().set("table", table)?;
-
-    lua.load(
-        r#"
-        for k,v in pairs(table) do
-            print(k,v)
-        end
-        "#,
+    let mut window = Window::new(
+        "Test - ESC to exit",
+        WIDTH,
+        HEIGHT,
+        WindowOptions::default(),
     )
-    .exec()?;
+    .unwrap_or_else(|e| {
+        panic!("{}", e);
+    });
 
-    Ok(())
+    window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
+
+    while window.is_open() && !window.is_key_down(Key::Escape) {
+        for i in buffer.iter_mut() {
+            *i = 0x00_55_FF_FF;
+        }
+
+        window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
+    }
 }
